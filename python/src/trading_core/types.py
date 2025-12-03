@@ -35,7 +35,7 @@ class AssetWire(BaseModel):
     valid_from: Optional[int] = Field(None, alias="validFrom")
     valid_until: Optional[int] = Field(None, alias="validUntil")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class Asset(BaseModel):
@@ -96,6 +96,8 @@ class MarketSnapshotWire(BaseModel):
     price: dict[str, float]
     timestamp: int
 
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
 
 class MarketSnapshot(BaseModel):
     """Runtime MarketSnapshot type."""
@@ -138,7 +140,7 @@ class MarketQuoteWire(BaseModel):
     ask_vol: Optional[float] = Field(None, alias="askVol")
     pre_close: Optional[float] = Field(None, alias="preClose")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class MarketQuote(BaseModel):
@@ -218,6 +220,8 @@ class MarketBarWire(BaseModel):
     volume: float
     timestamp: int
     interval: MarketBarInterval
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class MarketBar(BaseModel):
@@ -312,7 +316,7 @@ class OrderWire(BaseModel):
     stop_price: Optional[float] = Field(None, alias="stopPrice")
     created: Optional[int] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class Order(BaseModel):
@@ -380,7 +384,7 @@ class OrderStateWire(BaseModel):
     status: OrderStatus
     modified: int
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class OrderState(BaseModel):
@@ -456,7 +460,7 @@ class FillWire(BaseModel):
     commission: float
     created: int
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class Fill(BaseModel):
@@ -514,7 +518,7 @@ class LongPositionLot(BaseModel):
     price: float
     total_cost: float = Field(alias="totalCost")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class LongPositionWire(BaseModel):
@@ -526,7 +530,7 @@ class LongPositionWire(BaseModel):
     lots: list[LongPositionLot]
     modified: int
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class LongPosition(BaseModel):
@@ -567,7 +571,7 @@ class ShortPositionLot(BaseModel):
     price: float
     total_proceeds: float = Field(alias="totalProceeds")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class ShortPositionWire(BaseModel):
@@ -579,7 +583,7 @@ class ShortPositionWire(BaseModel):
     lots: list[ShortPositionLot]
     modified: int
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class ShortPosition(BaseModel):
@@ -623,7 +627,7 @@ class PositionWire(BaseModel):
     realised_pnl: float = Field(alias="realisedPnL")
     modified: int
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class Position(BaseModel):
