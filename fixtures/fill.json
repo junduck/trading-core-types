@@ -1,0 +1,11 @@
+{
+  "id": "fill-98765",
+  "orderId": "order-12345",
+  "symbol": "TSLA",
+  "side": "BUY",
+  "effect": "OPEN_LONG",
+  "quantity": 50,
+  "price": 250.50,
+  "commission": 2.50,
+  "created": 1609459300000
+}

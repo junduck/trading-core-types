@@ -1,0 +1,10 @@
+{
+  "id": "order-12345",
+  "symbol": "TSLA",
+  "side": "BUY",
+  "effect": "OPEN_LONG",
+  "type": "LIMIT",
+  "quantity": 100,
+  "price": 250.50,
+  "created": 1609459200000
+}

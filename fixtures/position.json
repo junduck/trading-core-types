@@ -1,0 +1,41 @@
+{
+  "cash": 50000.00,
+  "long": {
+    "AAPL": {
+      "quantity": 100,
+      "totalCost": 15025.00,
+      "realisedPnL": 150.00,
+      "lots": [
+        {
+          "quantity": 50,
+          "price": 150.00,
+          "totalCost": 7500.00
+        },
+        {
+          "quantity": 50,
+          "price": 150.50,
+          "totalCost": 7525.00
+        }
+      ],
+      "modified": 1609459200000
+    }
+  },
+  "short": {
+    "TSLA": {
+      "quantity": 50,
+      "totalProceeds": 12525.00,
+      "realisedPnL": -75.00,
+      "lots": [
+        {
+          "quantity": 50,
+          "price": 250.50,
+          "totalProceeds": 12525.00
+        }
+      ],
+      "modified": 1609459300000
+    }
+  },
+  "totalCommission": 25.50,
+  "realisedPnL": 75.00,
+  "modified": 1609459500000
+}

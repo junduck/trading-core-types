@@ -17,7 +17,7 @@ export function dateToWire(date: Date): number {
 // Asset
 // ============================================================================
 
-const AssetWireSchema = z.object({
+export const AssetWireSchema = z.object({
   symbol: z.string(),
   type: z.string().optional(),
   name: z.string().optional(),
@@ -63,7 +63,7 @@ export function toWireAsset(asset: Asset): AssetWire {
 // MarketSnapshot
 // ============================================================================
 
-const MarketSnapshotWireSchema = z.object({
+export const MarketSnapshotWireSchema = z.object({
   price: z.record(z.string(), z.number()),
   timestamp: z.number(),
 });
@@ -92,7 +92,7 @@ export function toWireMarketSnapshot(
 // MarketQuote
 // ============================================================================
 
-const MarketQuoteWireSchema = z.object({
+export const MarketQuoteWireSchema = z.object({
   symbol: z.string(),
   price: z.number(),
   volume: z.number().optional(),
@@ -154,7 +154,7 @@ export const MarketBarInterval = z.enum([
   "1M",
 ]);
 
-const MarketBarWireSchema = z.object({
+export const MarketBarWireSchema = z.object({
   symbol: z.string(),
   open: z.number(),
   high: z.number(),
@@ -219,7 +219,7 @@ const OrderActionWire = z.discriminatedUnion("side", [
   }),
 ]);
 
-const OrderWireSchema = OrderActionWire.and(
+export const OrderWireSchema = OrderActionWire.and(
   z.object({
     id: z.string(),
     symbol: z.string(),
@@ -251,7 +251,7 @@ export function toWireOrder(order: Order): OrderWire {
 // OrderState
 // ============================================================================
 
-const OrderStateWireSchema = OrderWireSchema.and(
+export const OrderStateWireSchema = OrderWireSchema.and(
   z.object({
     filledQuantity: z.number(),
     remainingQuantity: z.number(),
@@ -282,7 +282,7 @@ export function toWireOrderState(state: OrderState): OrderStateWire {
 // Fill
 // ============================================================================
 
-const FillWireSchema = OrderActionWire.and(
+export const FillWireSchema = OrderActionWire.and(
   z.object({
     id: z.string(),
     orderId: z.string(),
@@ -320,7 +320,7 @@ export const LongPositionLot = z.object({
   totalCost: z.number(),
 });
 
-const LongPositionWireSchema = z.object({
+export const LongPositionWireSchema = z.object({
   quantity: z.number(),
   totalCost: z.number(),
   realisedPnL: z.number(),
@@ -356,7 +356,7 @@ export const ShortPositionLot = z.object({
   totalProceeds: z.number(),
 });
 
-const ShortPositionWireSchema = z.object({
+export const ShortPositionWireSchema = z.object({
   quantity: z.number(),
   totalProceeds: z.number(),
   realisedPnL: z.number(),
@@ -388,7 +388,7 @@ export function toWireShortPosition(pos: ShortPosition): ShortPositionWire {
   };
 }
 
-const PositionWireSchema = z.object({
+export const PositionWireSchema = z.object({
   cash: z.number(),
   long: z.record(z.string(), LongPositionWireSchema).optional(),
   short: z.record(z.string(), ShortPositionWireSchema).optional(),

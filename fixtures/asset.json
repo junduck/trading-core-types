@@ -1,0 +1,11 @@
+{
+  "symbol": "AAPL",
+  "type": "stock",
+  "name": "Apple Inc.",
+  "exchange": "NASDAQ",
+  "currency": "USD",
+  "lotSize": 100,
+  "tickSize": 0.01,
+  "validFrom": 1609459200000,
+  "validUntil": 1640995200000
+}
