@@ -406,7 +406,7 @@ wheels = [
 ]
 
 [[package]]
-name = "trading-core-serdes"
+name = "trading-core-types"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
