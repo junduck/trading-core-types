@@ -1,0 +1,13 @@
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Agent configs
+.claude
+
+# Local dev
+memo/
