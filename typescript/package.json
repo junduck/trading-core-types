@@ -1,6 +1,6 @@
 {
   "name": "@junduck/trading-core-serdes",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Zod validation and JSON serdes for trading-core types",
   "type": "module",
   "main": "./dist/index.js",
@@ -39,7 +39,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/junduck/trading-core-types.git",
+    "url": "git+https://github.com/junduck/trading-core-types.git",
     "directory": "typescript"
   },
   "bugs": {
