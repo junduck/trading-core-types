@@ -1,6 +1,6 @@
 {
   "name": "@junduck/trading-core-serdes",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Zod validation and JSON serdes for trading-core types",
   "type": "module",
   "main": "./dist/index.js",
