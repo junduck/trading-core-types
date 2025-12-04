@@ -247,6 +247,37 @@ export function toWireOrder(order: Order): OrderWire {
   };
 }
 
+// Partial Order schema for amendments and updates
+export const PartialOrderWireSchema = z.object({
+  id: z.string(),
+  side: z.enum(["BUY", "SELL"]).optional(),
+  effect: z
+    .enum(["OPEN_LONG", "CLOSE_SHORT", "CLOSE_LONG", "OPEN_SHORT"])
+    .optional(),
+  symbol: z.string().optional(),
+  type: OrderType.optional(),
+  quantity: z.number().optional(),
+  price: z.number().optional(),
+  stopPrice: z.number().optional(),
+  created: z.number().optional(),
+});
+
+export type PartialOrderWire = z.infer<typeof PartialOrderWireSchema>;
+
+export const PartialOrderSchema = PartialOrderWireSchema.transform((data) => ({
+  ...data,
+  created: data.created ? new Date(data.created) : undefined,
+}));
+
+export type PartialOrder = z.infer<typeof PartialOrderSchema>;
+
+export function toWirePartialOrder(order: PartialOrder): PartialOrderWire {
+  return {
+    ...order,
+    created: order.created?.getTime(),
+  };
+}
+
 // ============================================================================
 // OrderState
 // ============================================================================

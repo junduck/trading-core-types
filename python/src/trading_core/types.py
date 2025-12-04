@@ -363,6 +363,70 @@ class Order(BaseModel):
 
 
 # ============================================================================
+# Partial Order Types
+# ============================================================================
+
+
+class PartialOrderWire(BaseModel):
+    """Partial order wire format for amendments and updates."""
+
+    id: str  # ID typically required for amendments
+    symbol: Optional[str] = None
+    side: Optional[Literal["BUY", "SELL"]] = None
+    effect: Optional[Literal["OPEN_LONG", "CLOSE_SHORT", "CLOSE_LONG", "OPEN_SHORT"]] = None
+    type: Optional[OrderType] = None
+    quantity: Optional[float] = None
+    price: Optional[float] = None
+    stop_price: Optional[float] = Field(None, alias="stopPrice")
+    created: Optional[int] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class PartialOrder(BaseModel):
+    """Runtime PartialOrder type."""
+
+    id: str
+    symbol: Optional[str] = None
+    side: Optional[Literal["BUY", "SELL"]] = None
+    effect: Optional[Literal["OPEN_LONG", "CLOSE_SHORT", "CLOSE_LONG", "OPEN_SHORT"]] = None
+    type: Optional[OrderType] = None
+    quantity: Optional[float] = None
+    price: Optional[float] = None
+    stop_price: Optional[float] = None
+    created: Optional[datetime] = None
+
+    @classmethod
+    def from_wire(cls, wire: PartialOrderWire) -> "PartialOrder":
+        """Create PartialOrder from wire format."""
+        return cls(
+            id=wire.id,
+            symbol=wire.symbol,
+            side=wire.side,
+            effect=wire.effect,
+            type=wire.type,
+            quantity=wire.quantity,
+            price=wire.price,
+            stop_price=wire.stop_price,
+            created=ms_to_datetime(wire.created) if wire.created else None,
+        )
+
+    def to_wire(self) -> PartialOrderWire:
+        """Convert to wire format."""
+        return PartialOrderWire(
+            id=self.id,
+            symbol=self.symbol,
+            side=self.side,
+            effect=self.effect,
+            type=self.type,
+            quantity=self.quantity,
+            price=self.price,
+            stopPrice=self.stop_price,
+            created=datetime_to_ms(self.created) if self.created else None,
+        )
+
+
+# ============================================================================
 # OrderState
 # ============================================================================
 
