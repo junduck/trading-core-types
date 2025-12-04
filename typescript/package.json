@@ -1,7 +1,7 @@
 {
   "name": "@junduck/trading-core-serdes",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Zod validation and JSON serdes for trading-core types",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -25,9 +25,27 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "trading",
+    "zod",
+    "validation",
+    "serialization",
+    "deserialization",
+    "typescript",
+    "json",
+    "schema"
+  ],
   "author": "Jun",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/junduck/trading-core-types.git",
+    "directory": "typescript"
+  },
+  "bugs": {
+    "url": "https://github.com/junduck/trading-core-types/issues"
+  },
+  "homepage": "https://github.com/junduck/trading-core-types#readme",
   "packageManager": "pnpm@10.23.0",
   "devDependencies": {
     "@types/node": "^24.10.1",

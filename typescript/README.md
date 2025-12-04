@@ -1,9 +1,17 @@
-# trading-core types and serdes library
+# @junduck/trading-core-types
 
-This library provides zod validation and JSON serialisation/deserialisation facilities for all trading-core types.
+TypeScript library providing Zod validation and serialization/deserialization for `@junduck/trading-core` types.
 
-It is implemented that:
+## Features
 
-1. All interfaces are kept up-to-date with current trading-core version.
+- **Type-safe validation**: Zod schemas for all trading-core types
+- **JSON serdes**: Standard JSON serialization/deserialization for wire transport
+- **Date handling**: Automatic conversion between `Date` objects and epoch timestamps
+- **Consistent transport**: Ensures trading-core types are transmitted reliably and consistently
 
-2. All interfaces are delcared directly in index.ts so coding agents find them easier and make less mistakes.
+## Implementation
+
+- All interfaces are kept up-to-date with current trading-core version
+- All interfaces are declared directly in `index.ts` for easier discovery by coding agents
+- Uses standard JSON format for maximum compatibility
+- Non-trivial types (e.g., `Date` fields) are automatically converted to/from epoch timestamps during serdes
