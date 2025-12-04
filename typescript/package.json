@@ -54,6 +54,7 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
+    "@junduck/trading-core": "^2.8.0",
     "zod": "^4.1.13"
   }
 }

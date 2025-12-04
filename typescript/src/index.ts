@@ -1,15 +1,34 @@
 import { z } from "zod";
 
-/**
- * Helper for epoch millisecond timestamp fields.
- * Transforms wire number (ms since epoch) to runtime Date.
- */
-export const epochDate = z.number().transform((ms) => new Date(ms));
+// Import original definitions from trading-core
+import type {
+  Asset,
+  MarketSnapshot,
+  MarketQuote,
+  MarketBar,
+  Order,
+  OrderState,
+  Fill,
+  Position,
+} from "@junduck/trading-core";
+
+import type {
+  MarketBarInterval,
+  OrderType,
+  OrderStatus,
+} from "@junduck/trading-core";
 
 /**
- * Converts Date to epoch milliseconds for wire transmission.
+ * Converts epoch milliseconds to Date.
  */
-export function dateToWire(date: Date): number {
+export function msToDate(ms: number): Date {
+  return new Date(ms);
+}
+
+/**
+ * Converts Date to epoch milliseconds.
+ */
+export function dateToMs(date: Date): number {
   return date.getTime();
 }
 
@@ -31,20 +50,41 @@ export const AssetWireSchema = z.object({
 
 export type AssetWire = z.infer<typeof AssetWireSchema>;
 
-export const AssetSchema = AssetWireSchema.transform((data) => ({
-  ...data,
-  validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
-  validUntil: data.validUntil ? new Date(data.validUntil) : undefined,
-}));
-
-export type Asset = z.infer<typeof AssetSchema>;
-
-export function toWireAsset(asset: Asset): AssetWire {
-  return {
-    ...asset,
-    validFrom: asset.validFrom?.getTime(),
-    validUntil: asset.validUntil?.getTime(),
+export function encodeAsset(asset: Asset): AssetWire {
+  const wire: AssetWire = {
+    symbol: asset.symbol,
+    currency: asset.currency,
   };
+
+  if (asset.type !== undefined) wire.type = asset.type;
+  if (asset.name !== undefined) wire.name = asset.name;
+  if (asset.exchange !== undefined) wire.exchange = asset.exchange;
+  if (asset.lotSize !== undefined) wire.lotSize = asset.lotSize;
+  if (asset.tickSize !== undefined) wire.tickSize = asset.tickSize;
+  if (asset.validFrom !== undefined) wire.validFrom = dateToMs(asset.validFrom);
+  if (asset.validUntil !== undefined)
+    wire.validUntil = dateToMs(asset.validUntil);
+
+  return wire;
+}
+
+export function decodeAsset(parsed: z.infer<typeof AssetWireSchema>): Asset {
+  const asset: Asset = {
+    symbol: parsed.symbol,
+    currency: parsed.currency,
+  };
+
+  if (parsed.type !== undefined) asset.type = parsed.type;
+  if (parsed.name !== undefined) asset.name = parsed.name;
+  if (parsed.exchange !== undefined) asset.exchange = parsed.exchange;
+  if (parsed.lotSize !== undefined) asset.lotSize = parsed.lotSize;
+  if (parsed.tickSize !== undefined) asset.tickSize = parsed.tickSize;
+  if (parsed.validFrom !== undefined)
+    asset.validFrom = msToDate(parsed.validFrom);
+  if (parsed.validUntil !== undefined)
+    asset.validUntil = msToDate(parsed.validUntil);
+
+  return asset;
 }
 
 // ============================================================================
@@ -58,21 +98,21 @@ export const MarketSnapshotWireSchema = z.object({
 
 export type MarketSnapshotWire = z.infer<typeof MarketSnapshotWireSchema>;
 
-export const MarketSnapshotSchema = MarketSnapshotWireSchema.transform(
-  (data) => ({
-    price: new Map(Object.entries(data.price)),
-    timestamp: new Date(data.timestamp),
-  })
-);
-
-export type MarketSnapshot = z.infer<typeof MarketSnapshotSchema>;
-
-export function toWireMarketSnapshot(
+export function encodeMarketSnapshot(
   snapshot: MarketSnapshot
 ): MarketSnapshotWire {
   return {
     price: Object.fromEntries(snapshot.price),
-    timestamp: snapshot.timestamp.getTime(),
+    timestamp: dateToMs(snapshot.timestamp),
+  };
+}
+
+export function decodeMarketSnapshot(
+  parsed: z.infer<typeof MarketSnapshotWireSchema>
+): MarketSnapshot {
+  return {
+    price: new Map(Object.entries(parsed.price)),
+    timestamp: msToDate(parsed.timestamp),
   };
 }
 
@@ -95,36 +135,47 @@ export const MarketQuoteWireSchema = z.object({
 
 export type MarketQuoteWire = z.infer<typeof MarketQuoteWireSchema>;
 
-export const MarketQuoteSchema = MarketQuoteWireSchema.transform((data) => ({
-  ...data,
-  timestamp: new Date(data.timestamp),
-}));
-
-export type MarketQuote = z.infer<typeof MarketQuoteSchema>;
-
-export function toWireMarketQuote(quote: MarketQuote): MarketQuoteWire {
-  return {
-    ...quote,
-    timestamp: quote.timestamp.getTime(),
+export function encodeMarketQuote(quote: MarketQuote): MarketQuoteWire {
+  const wire: MarketQuoteWire = {
+    symbol: quote.symbol,
+    price: quote.price,
+    timestamp: dateToMs(quote.timestamp),
   };
+
+  if (quote.volume !== undefined) wire.volume = quote.volume;
+  if (quote.totalVolume !== undefined) wire.totalVolume = quote.totalVolume;
+  if (quote.bid !== undefined) wire.bid = quote.bid;
+  if (quote.bidVol !== undefined) wire.bidVol = quote.bidVol;
+  if (quote.ask !== undefined) wire.ask = quote.ask;
+  if (quote.askVol !== undefined) wire.askVol = quote.askVol;
+  if (quote.preClose !== undefined) wire.preClose = quote.preClose;
+
+  return wire;
+}
+
+export function decodeMarketQuote(
+  parsed: z.infer<typeof MarketQuoteWireSchema>
+): MarketQuote {
+  const quote: MarketQuote = {
+    symbol: parsed.symbol,
+    price: parsed.price,
+    timestamp: msToDate(parsed.timestamp),
+  };
+
+  if (parsed.volume !== undefined) quote.volume = parsed.volume;
+  if (parsed.totalVolume !== undefined) quote.totalVolume = parsed.totalVolume;
+  if (parsed.bid !== undefined) quote.bid = parsed.bid;
+  if (parsed.bidVol !== undefined) quote.bidVol = parsed.bidVol;
+  if (parsed.ask !== undefined) quote.ask = parsed.ask;
+  if (parsed.askVol !== undefined) quote.askVol = parsed.askVol;
+  if (parsed.preClose !== undefined) quote.preClose = parsed.preClose;
+
+  return quote;
 }
 
 // ============================================================================
 // MarketBar
 // ============================================================================
-
-export const MarketBarInterval = z.enum([
-  "1m",
-  "5m",
-  "15m",
-  "30m",
-  "1h",
-  "2h",
-  "4h",
-  "1d",
-  "1w",
-  "1M",
-]);
 
 export const MarketBarWireSchema = z.object({
   symbol: z.string(),
@@ -134,39 +185,53 @@ export const MarketBarWireSchema = z.object({
   close: z.number(),
   volume: z.number(),
   timestamp: z.number(),
-  interval: MarketBarInterval,
+  interval: z.enum([
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "2h",
+    "4h",
+    "1d",
+    "1w",
+    "1M",
+  ]),
 });
 
 export type MarketBarWire = z.infer<typeof MarketBarWireSchema>;
 
-export const MarketBarSchema = MarketBarWireSchema.transform((data) => ({
-  ...data,
-  timestamp: new Date(data.timestamp),
-}));
-
-export type MarketBar = z.infer<typeof MarketBarSchema>;
-
-export function toWireMarketBar(bar: MarketBar): MarketBarWire {
+export function encodeMarketBar(bar: MarketBar): MarketBarWire {
   return {
-    ...bar,
-    timestamp: bar.timestamp.getTime(),
+    symbol: bar.symbol,
+    open: bar.open,
+    high: bar.high,
+    low: bar.low,
+    close: bar.close,
+    volume: bar.volume,
+    timestamp: dateToMs(bar.timestamp),
+    interval: bar.interval,
+  };
+}
+
+export function decodeMarketBar(
+  parsed: z.infer<typeof MarketBarWireSchema>
+): MarketBar {
+  return {
+    symbol: parsed.symbol,
+    open: parsed.open,
+    high: parsed.high,
+    low: parsed.low,
+    close: parsed.close,
+    volume: parsed.volume,
+    timestamp: msToDate(parsed.timestamp),
+    interval: parsed.interval as MarketBarInterval,
   };
 }
 
 // ============================================================================
 // Order Types
 // ============================================================================
-
-export const OrderType = z.enum(["MARKET", "LIMIT", "STOP", "STOP_LIMIT"]);
-
-export const OrderStatus = z.enum([
-  "PENDING",
-  "OPEN",
-  "PARTIAL",
-  "FILLED",
-  "CANCELLED",
-  "REJECT",
-]);
 
 const OrderActionWire = z.discriminatedUnion("side", [
   z.object({
@@ -183,7 +248,7 @@ export const OrderWireSchema = OrderActionWire.and(
   z.object({
     id: z.string(),
     symbol: z.string(),
-    type: OrderType,
+    type: z.enum(["MARKET", "LIMIT", "STOP", "STOP_LIMIT"]),
     quantity: z.number(),
     price: z.number().optional(),
     stopPrice: z.number().optional(),
@@ -193,21 +258,65 @@ export const OrderWireSchema = OrderActionWire.and(
 
 export type OrderWire = z.infer<typeof OrderWireSchema>;
 
-export const OrderSchema = OrderWireSchema.transform((data) => ({
-  ...data,
-  created: data.created ? new Date(data.created) : undefined,
-}));
-
-export type Order = z.infer<typeof OrderSchema>;
-
-export function toWireOrder(order: Order): OrderWire {
-  return {
-    ...order,
-    created: order.created?.getTime(),
+export function encodeOrder(order: Order): OrderWire {
+  const wire: any = {
+    id: order.id,
+    symbol: order.symbol,
+    type: order.type as OrderType,
+    quantity: order.quantity,
   };
+
+  if (order.price !== undefined) wire.price = order.price;
+  if (order.stopPrice !== undefined) wire.stopPrice = order.stopPrice;
+  if (order.created !== undefined) wire.created = dateToMs(order.created);
+
+  if (order.side === "BUY") {
+    wire.side = "BUY" as const;
+    wire.effect = order.effect as "OPEN_LONG" | "CLOSE_SHORT";
+  } else {
+    wire.side = "SELL" as const;
+    wire.effect = order.effect as "CLOSE_LONG" | "OPEN_SHORT";
+  }
+
+  return wire as OrderWire;
 }
 
-// Partial Order schema for amendments and updates
+export function decodeOrder(parsed: z.infer<typeof OrderWireSchema>): Order {
+  const order: any = {
+    id: parsed.id,
+    symbol: parsed.symbol,
+    type: parsed.type as OrderType,
+    quantity: parsed.quantity,
+  };
+
+  if (parsed.price !== undefined) order.price = parsed.price;
+  if (parsed.stopPrice !== undefined) order.stopPrice = parsed.stopPrice;
+  if (parsed.created !== undefined) order.created = msToDate(parsed.created);
+
+  if (parsed.side === "BUY") {
+    order.side = "BUY" as const;
+    order.effect = parsed.effect as "OPEN_LONG" | "CLOSE_SHORT";
+  } else {
+    order.side = "SELL" as const;
+    order.effect = parsed.effect as "CLOSE_LONG" | "OPEN_SHORT";
+  }
+
+  return order as Order;
+}
+
+// Partial Order for amendments and updates
+export interface PartialOrder {
+  id: string;
+  side?: "BUY" | "SELL";
+  effect?: "OPEN_LONG" | "CLOSE_SHORT" | "CLOSE_LONG" | "OPEN_SHORT";
+  symbol?: string;
+  type?: OrderType;
+  quantity?: number;
+  price?: number;
+  stopPrice?: number;
+  created?: Date;
+}
+
 export const PartialOrderWireSchema = z.object({
   id: z.string(),
   side: z.enum(["BUY", "SELL"]).optional(),
@@ -215,7 +324,7 @@ export const PartialOrderWireSchema = z.object({
     .enum(["OPEN_LONG", "CLOSE_SHORT", "CLOSE_LONG", "OPEN_SHORT"])
     .optional(),
   symbol: z.string().optional(),
-  type: OrderType.optional(),
+  type: z.enum(["MARKET", "LIMIT", "STOP", "STOP_LIMIT"]).optional(),
   quantity: z.number().optional(),
   price: z.number().optional(),
   stopPrice: z.number().optional(),
@@ -224,49 +333,126 @@ export const PartialOrderWireSchema = z.object({
 
 export type PartialOrderWire = z.infer<typeof PartialOrderWireSchema>;
 
-export const PartialOrderSchema = PartialOrderWireSchema.transform((data) => ({
-  ...data,
-  created: data.created ? new Date(data.created) : undefined,
-}));
-
-export type PartialOrder = z.infer<typeof PartialOrderSchema>;
-
-export function toWirePartialOrder(order: PartialOrder): PartialOrderWire {
-  return {
-    ...order,
-    created: order.created?.getTime(),
+export function encodePartialOrder(order: PartialOrder): PartialOrderWire {
+  const wire: PartialOrderWire = {
+    id: order.id,
   };
+
+  if (order.side !== undefined) wire.side = order.side;
+  if (order.effect !== undefined) wire.effect = order.effect;
+  if (order.symbol !== undefined) wire.symbol = order.symbol;
+  if (order.type !== undefined) wire.type = order.type;
+  if (order.quantity !== undefined) wire.quantity = order.quantity;
+  if (order.price !== undefined) wire.price = order.price;
+  if (order.stopPrice !== undefined) wire.stopPrice = order.stopPrice;
+  if (order.created !== undefined) wire.created = dateToMs(order.created);
+
+  return wire;
+}
+
+export function decodePartialOrder(
+  parsed: z.infer<typeof PartialOrderWireSchema>
+): PartialOrder {
+  const order: PartialOrder = {
+    id: parsed.id,
+  };
+
+  if (parsed.side !== undefined) order.side = parsed.side;
+  if (parsed.effect !== undefined) order.effect = parsed.effect;
+  if (parsed.symbol !== undefined) order.symbol = parsed.symbol;
+  if (parsed.type !== undefined) order.type = parsed.type as OrderType;
+  if (parsed.quantity !== undefined) order.quantity = parsed.quantity;
+  if (parsed.price !== undefined) order.price = parsed.price;
+  if (parsed.stopPrice !== undefined) order.stopPrice = parsed.stopPrice;
+  if (parsed.created !== undefined) order.created = msToDate(parsed.created);
+
+  return order;
 }
 
 // ============================================================================
 // OrderState
 // ============================================================================
 
-export const OrderStateWireSchema = OrderWireSchema.and(
+export const OrderStateWireSchema = OrderActionWire.and(
   z.object({
+    id: z.string(),
+    symbol: z.string(),
+    type: z.enum(["MARKET", "LIMIT", "STOP", "STOP_LIMIT"]),
+    quantity: z.number(),
+    price: z.number().optional(),
+    stopPrice: z.number().optional(),
+    created: z.number().optional(),
     filledQuantity: z.number(),
     remainingQuantity: z.number(),
-    status: OrderStatus,
+    status: z.enum([
+      "PENDING",
+      "OPEN",
+      "PARTIAL",
+      "FILLED",
+      "CANCELLED",
+      "REJECT",
+    ]),
     modified: z.number(),
   })
 );
 
 export type OrderStateWire = z.infer<typeof OrderStateWireSchema>;
 
-export const OrderStateSchema = OrderStateWireSchema.transform((data) => ({
-  ...data,
-  created: data.created ? new Date(data.created) : undefined,
-  modified: new Date(data.modified),
-}));
-
-export type OrderState = z.infer<typeof OrderStateSchema>;
-
-export function toWireOrderState(state: OrderState): OrderStateWire {
-  return {
-    ...state,
-    created: state.created?.getTime(),
-    modified: state.modified.getTime(),
+export function encodeOrderState(state: OrderState): OrderStateWire {
+  const baseWire: any = {
+    id: state.id,
+    symbol: state.symbol,
+    type: state.type as OrderType,
+    quantity: state.quantity,
+    filledQuantity: state.filledQuantity,
+    remainingQuantity: state.remainingQuantity,
+    status: state.status as OrderStatus,
+    modified: dateToMs(state.modified),
   };
+
+  if (state.price !== undefined) baseWire.price = state.price;
+  if (state.stopPrice !== undefined) baseWire.stopPrice = state.stopPrice;
+  if (state.created !== undefined) baseWire.created = dateToMs(state.created);
+
+  if (state.side === "BUY") {
+    baseWire.side = "BUY" as const;
+    baseWire.effect = state.effect as "OPEN_LONG" | "CLOSE_SHORT";
+  } else {
+    baseWire.side = "SELL" as const;
+    baseWire.effect = state.effect as "CLOSE_LONG" | "OPEN_SHORT";
+  }
+
+  return baseWire as OrderStateWire;
+}
+
+export function decodeOrderState(
+  parsed: z.infer<typeof OrderStateWireSchema>
+): OrderState {
+  const baseState: any = {
+    id: parsed.id,
+    symbol: parsed.symbol,
+    type: parsed.type as OrderType,
+    quantity: parsed.quantity,
+    filledQuantity: parsed.filledQuantity,
+    remainingQuantity: parsed.remainingQuantity,
+    status: parsed.status as OrderStatus,
+    modified: msToDate(parsed.modified),
+  };
+
+  if (parsed.price !== undefined) baseState.price = parsed.price;
+  if (parsed.stopPrice !== undefined) baseState.stopPrice = parsed.stopPrice;
+  if (parsed.created !== undefined)
+    baseState.created = msToDate(parsed.created);
+
+  if (parsed.side === "BUY") {
+    baseState.side = "BUY" as const;
+    baseState.effect = parsed.effect as "OPEN_LONG" | "CLOSE_SHORT";
+  } else {
+    baseState.side = "SELL" as const;
+    baseState.effect = parsed.effect as "CLOSE_LONG" | "OPEN_SHORT";
+  }
+
+  return baseState as OrderState;
 }
 
 // ============================================================================
@@ -287,83 +473,172 @@ export const FillWireSchema = OrderActionWire.and(
 
 export type FillWire = z.infer<typeof FillWireSchema>;
 
-export const FillSchema = FillWireSchema.transform((data) => ({
-  ...data,
-  created: new Date(data.created),
-}));
+export function encodeFill(fill: Fill): FillWire {
+  if (fill.side === "BUY") {
+    return {
+      id: fill.id,
+      orderId: fill.orderId,
+      symbol: fill.symbol,
+      side: "BUY" as const,
+      effect: fill.effect as "OPEN_LONG" | "CLOSE_SHORT",
+      quantity: fill.quantity,
+      price: fill.price,
+      commission: fill.commission,
+      created: dateToMs(fill.created),
+    } as FillWire;
+  } else {
+    return {
+      id: fill.id,
+      orderId: fill.orderId,
+      symbol: fill.symbol,
+      side: "SELL" as const,
+      effect: fill.effect as "CLOSE_LONG" | "OPEN_SHORT",
+      quantity: fill.quantity,
+      price: fill.price,
+      commission: fill.commission,
+      created: dateToMs(fill.created),
+    } as FillWire;
+  }
+}
 
-export type Fill = z.infer<typeof FillSchema>;
-
-export function toWireFill(fill: Fill): FillWire {
-  return {
-    ...fill,
-    created: fill.created.getTime(),
-  };
+export function decodeFill(parsed: z.infer<typeof FillWireSchema>): Fill {
+  if (parsed.side === "BUY") {
+    return {
+      side: "BUY",
+      effect: parsed.effect as "OPEN_LONG" | "CLOSE_SHORT",
+      id: parsed.id,
+      orderId: parsed.orderId,
+      symbol: parsed.symbol,
+      quantity: parsed.quantity,
+      price: parsed.price,
+      commission: parsed.commission,
+      created: msToDate(parsed.created),
+    };
+  } else {
+    return {
+      side: "SELL",
+      effect: parsed.effect as "CLOSE_LONG" | "OPEN_SHORT",
+      id: parsed.id,
+      orderId: parsed.orderId,
+      symbol: parsed.symbol,
+      quantity: parsed.quantity,
+      price: parsed.price,
+      commission: parsed.commission,
+      created: msToDate(parsed.created),
+    };
+  }
 }
 
 // ============================================================================
 // Position Types
 // ============================================================================
 
-export const LongPositionLot = z.object({
+// Custom types for position lots (not exported from trading-core)
+export interface LongPositionLot {
+  quantity: number;
+  price: number;
+  totalCost: number;
+}
+
+export const LongPositionLotSchema = z.object({
   quantity: z.number(),
   price: z.number(),
   totalCost: z.number(),
 });
+
+export type LongPositionLotType = z.infer<typeof LongPositionLotSchema>;
+
+export interface LongPosition {
+  quantity: number;
+  totalCost: number;
+  realisedPnL: number;
+  lots: LongPositionLotType[];
+  modified: Date;
+}
 
 export const LongPositionWireSchema = z.object({
   quantity: z.number(),
   totalCost: z.number(),
   realisedPnL: z.number(),
-  lots: z.array(LongPositionLot),
+  lots: z.array(LongPositionLotSchema),
   modified: z.number(),
 });
 
 export type LongPositionWire = z.infer<typeof LongPositionWireSchema>;
 
-export const LongPositionSchema = LongPositionWireSchema.transform((data) => ({
-  ...data,
-  modified: new Date(data.modified),
-}));
-
-export type LongPosition = z.infer<typeof LongPositionSchema>;
-
-export function toWireLongPosition(pos: LongPosition): LongPositionWire {
+export function encodeLongPosition(pos: LongPosition): LongPositionWire {
   return {
-    ...pos,
-    modified: pos.modified.getTime(),
+    quantity: pos.quantity,
+    totalCost: pos.totalCost,
+    realisedPnL: pos.realisedPnL,
+    lots: pos.lots,
+    modified: dateToMs(pos.modified),
   };
 }
 
-export const ShortPositionLot = z.object({
+export function decodeLongPosition(
+  parsed: z.infer<typeof LongPositionWireSchema>
+): LongPosition {
+  return {
+    quantity: parsed.quantity,
+    totalCost: parsed.totalCost,
+    realisedPnL: parsed.realisedPnL,
+    lots: parsed.lots,
+    modified: msToDate(parsed.modified),
+  };
+}
+
+export interface ShortPositionLot {
+  quantity: number;
+  price: number;
+  totalProceeds: number;
+}
+
+export const ShortPositionLotSchema = z.object({
   quantity: z.number(),
   price: z.number(),
   totalProceeds: z.number(),
 });
 
+export type ShortPositionLotType = z.infer<typeof ShortPositionLotSchema>;
+
+export interface ShortPosition {
+  quantity: number;
+  totalProceeds: number;
+  realisedPnL: number;
+  lots: ShortPositionLotType[];
+  modified: Date;
+}
+
 export const ShortPositionWireSchema = z.object({
   quantity: z.number(),
   totalProceeds: z.number(),
   realisedPnL: z.number(),
-  lots: z.array(ShortPositionLot),
+  lots: z.array(ShortPositionLotSchema),
   modified: z.number(),
 });
 
 export type ShortPositionWire = z.infer<typeof ShortPositionWireSchema>;
 
-export const ShortPositionSchema = ShortPositionWireSchema.transform(
-  (data) => ({
-    ...data,
-    modified: new Date(data.modified),
-  })
-);
-
-export type ShortPosition = z.infer<typeof ShortPositionSchema>;
-
-export function toWireShortPosition(pos: ShortPosition): ShortPositionWire {
+export function encodeShortPosition(pos: ShortPosition): ShortPositionWire {
   return {
-    ...pos,
-    modified: pos.modified.getTime(),
+    quantity: pos.quantity,
+    totalProceeds: pos.totalProceeds,
+    realisedPnL: pos.realisedPnL,
+    lots: pos.lots,
+    modified: dateToMs(pos.modified),
+  };
+}
+
+export function decodeShortPosition(
+  parsed: z.infer<typeof ShortPositionWireSchema>
+): ShortPosition {
+  return {
+    quantity: parsed.quantity,
+    totalProceeds: parsed.totalProceeds,
+    realisedPnL: parsed.realisedPnL,
+    lots: parsed.lots,
+    modified: msToDate(parsed.modified),
   };
 }
 
@@ -378,50 +653,51 @@ export const PositionWireSchema = z.object({
 
 export type PositionWire = z.infer<typeof PositionWireSchema>;
 
-export const PositionSchema = PositionWireSchema.transform((data) => ({
-  ...data,
-  long: data.long
-    ? new Map(
-        Object.entries(data.long).map(([k, v]) => [
-          k,
-          LongPositionSchema.parse(v),
-        ])
-      )
-    : undefined,
-  short: data.short
-    ? new Map(
-        Object.entries(data.short).map(([k, v]) => [
-          k,
-          ShortPositionSchema.parse(v),
-        ])
-      )
-    : undefined,
-  modified: new Date(data.modified),
-}));
-
-export type Position = z.infer<typeof PositionSchema>;
-
-export function toWirePosition(pos: Position): PositionWire {
-  return {
-    ...pos,
-    long: pos.long
-      ? Object.fromEntries(
-          Array.from(pos.long.entries()).map(([k, v]) => [
-            k,
-            toWireLongPosition(v),
-          ])
-        )
-      : undefined,
-    short: pos.short
-      ? Object.fromEntries(
-          Array.from(pos.short.entries()).map(([k, v]) => [
-            k,
-            toWireShortPosition(v),
-          ])
-        )
-      : undefined,
-    modified: pos.modified.getTime(),
+export function encodePosition(pos: Position): PositionWire {
+  const wire: PositionWire = {
+    cash: pos.cash,
+    totalCommission: pos.totalCommission,
+    realisedPnL: pos.realisedPnL,
+    modified: dateToMs(pos.modified),
   };
+
+  if (pos.long) {
+    wire.long = Object.fromEntries(
+      Array.from(pos.long.entries()).map(([k, v]) => [k, encodeLongPosition(v)])
+    );
+  }
+
+  if (pos.short) {
+    wire.short = Object.fromEntries(
+      Array.from(pos.short.entries()).map(([k, v]) => [
+        k,
+        encodeShortPosition(v),
+      ])
+    );
+  }
+
+  return wire;
 }
 
-export const CloseStrategy = z.enum(["FIFO", "LIFO"]);
+export function decodePosition(
+  parsed: z.infer<typeof PositionWireSchema>
+): Position {
+  const result: Position = {
+    cash: parsed.cash,
+    totalCommission: parsed.totalCommission,
+    realisedPnL: parsed.realisedPnL,
+    modified: msToDate(parsed.modified),
+  };
+  if (parsed.long) {
+    result.long = new Map(
+      Object.entries(parsed.long).map(([k, v]) => [k, decodeLongPosition(v)])
+    );
+  }
+  if (parsed.short) {
+    result.short = new Map(
+      Object.entries(parsed.short).map(([k, v]) => [k, decodeShortPosition(v)])
+    );
+  }
+
+  return result;
+}

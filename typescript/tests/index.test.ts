@@ -1,25 +1,29 @@
 import { describe, it, expect } from "vitest";
 import {
-  AssetSchema,
-  MarketSnapshotSchema,
-  MarketQuoteSchema,
-  MarketBarSchema,
-  OrderSchema,
-  OrderStateSchema,
-  FillSchema,
-  LongPositionSchema,
-  ShortPositionSchema,
-  PositionSchema,
-  toWireAsset,
-  toWireMarketSnapshot,
-  toWireMarketQuote,
-  toWireMarketBar,
-  toWireOrder,
-  toWireOrderState,
-  toWireFill,
-  toWireLongPosition,
-  toWireShortPosition,
-  toWirePosition,
+  AssetWireSchema,
+  MarketSnapshotWireSchema,
+  MarketQuoteWireSchema,
+  MarketBarWireSchema,
+  OrderWireSchema,
+  OrderStateWireSchema,
+  FillWireSchema,
+  PositionWireSchema,
+  encodeAsset,
+  decodeAsset,
+  encodeMarketSnapshot,
+  decodeMarketSnapshot,
+  encodeMarketQuote,
+  decodeMarketQuote,
+  encodeMarketBar,
+  decodeMarketBar,
+  encodeOrder,
+  decodeOrder,
+  encodeOrderState,
+  decodeOrderState,
+  encodeFill,
+  decodeFill,
+  encodePosition,
+  decodePosition,
 } from "../src/index";
 
 describe("Schema serdes", () => {
@@ -28,20 +32,28 @@ describe("Schema serdes", () => {
       const now = new Date();
       const later = new Date(now.getTime() + 86400000);
 
-      const runtime = AssetSchema.parse({
+      // Create test runtime object (simulating @junduck/trading-core Asset)
+      const testAsset = {
         symbol: "BTCUSDT",
         currency: "USDT",
-        validFrom: now.getTime(),
-        validUntil: later.getTime(),
-      });
+        validFrom: now,
+        validUntil: later,
+      };
 
+      // Encode to wire format
+      const wire = encodeAsset(testAsset);
+      expect(wire.symbol).toBe("BTCUSDT");
+      expect(wire.validFrom).toBe(now.getTime());
+      expect(wire.validUntil).toBe(later.getTime());
+
+      // Validate wire format with schema
+      const validatedWire = AssetWireSchema.parse(wire);
+
+      // Decode back to runtime object
+      const runtime = decodeAsset(validatedWire);
       expect(runtime.symbol).toBe("BTCUSDT");
       expect(runtime.validFrom).toEqual(now);
       expect(runtime.validUntil).toEqual(later);
-
-      const wire = toWireAsset(runtime);
-      expect(wire.validFrom).toBe(now.getTime());
-      expect(wire.validUntil).toBe(later.getTime());
     });
   });
 
@@ -49,18 +61,29 @@ describe("Schema serdes", () => {
     it("should handle Map serialization", () => {
       const now = new Date();
 
-      const runtime = MarketSnapshotSchema.parse({
-        price: { BTCUSDT: 50000, ETHUSDT: 3000 },
-        timestamp: now.getTime(),
-      });
+      // Create test runtime object (MarketSnapshot uses Map for price)
+      const testSnapshot = {
+        price: new Map([
+          ["BTCUSDT", 50000],
+          ["ETHUSDT", 3000],
+        ]),
+        timestamp: now,
+      };
 
-      expect(runtime.price).toBeInstanceOf(Map);
-      expect(runtime.price.get("BTCUSDT")).toBe(50000);
-      expect(runtime.timestamp).toEqual(now);
-
-      const wire = toWireMarketSnapshot(runtime);
+      // Encode to wire format (Map → Object)
+      const wire = encodeMarketSnapshot(testSnapshot);
       expect(wire.price).toEqual({ BTCUSDT: 50000, ETHUSDT: 3000 });
       expect(wire.timestamp).toBe(now.getTime());
+
+      // Validate wire format
+      const validatedWire = MarketSnapshotWireSchema.parse(wire);
+
+      // Decode back to runtime object (Object → Map)
+      const runtime = decodeMarketSnapshot(validatedWire);
+      expect(runtime.price).toBeInstanceOf(Map);
+      expect(runtime.price.get("BTCUSDT")).toBe(50000);
+      expect(runtime.price.get("ETHUSDT")).toBe(3000);
+      expect(runtime.timestamp).toEqual(now);
     });
   });
 
@@ -68,22 +91,32 @@ describe("Schema serdes", () => {
     it("should round-trip correctly", () => {
       const now = new Date();
 
-      const wire = {
+      // Create test runtime object (MarketQuote uses Date for timestamp)
+      const testQuote = {
         symbol: "BTCUSDT",
         price: 50000,
         volume: 100,
-        timestamp: now.getTime(),
+        timestamp: now,
         bid: 49999,
         bidVol: 10,
         ask: 50001,
         askVol: 20,
       };
 
-      const runtime = MarketQuoteSchema.parse(wire);
-      expect(runtime.timestamp).toEqual(now);
+      // Encode to wire format (Date → timestamp)
+      const wire = encodeMarketQuote(testQuote);
+      expect(wire.symbol).toBe("BTCUSDT");
+      expect(wire.price).toBe(50000);
+      expect(wire.timestamp).toBe(now.getTime());
 
-      const backToWire = toWireMarketQuote(runtime);
-      expect(backToWire).toEqual(wire);
+      // Validate wire format
+      const validatedWire = MarketQuoteWireSchema.parse(wire);
+
+      // Decode back to runtime object (timestamp → Date)
+      const runtime = decodeMarketQuote(validatedWire);
+      expect(runtime.symbol).toBe("BTCUSDT");
+      expect(runtime.price).toBe(50000);
+      expect(runtime.timestamp).toEqual(now);
     });
   });
 
@@ -91,22 +124,34 @@ describe("Schema serdes", () => {
     it("should preserve all OHLCV data", () => {
       const now = new Date();
 
-      const runtime = MarketBarSchema.parse({
+      // Create test runtime object (MarketBar uses Date for timestamp)
+      const testBar = {
         symbol: "BTCUSDT",
         open: 50000,
         high: 51000,
         low: 49000,
         close: 50500,
         volume: 1000,
-        timestamp: now.getTime(),
-        interval: "1h",
-      });
+        timestamp: now,
+        interval: "1h" as const,
+      };
 
+      // Encode to wire format (Date → timestamp)
+      const wire = encodeMarketBar(testBar);
+      expect(wire.symbol).toBe("BTCUSDT");
+      expect(wire.open).toBe(50000);
+      expect(wire.timestamp).toBe(now.getTime());
+      expect(wire.interval).toBe("1h");
+
+      // Validate wire format
+      const validatedWire = MarketBarWireSchema.parse(wire);
+
+      // Decode back to runtime object (timestamp → Date)
+      const runtime = decodeMarketBar(validatedWire);
+      expect(runtime.symbol).toBe("BTCUSDT");
+      expect(runtime.open).toBe(50000);
       expect(runtime.timestamp).toEqual(now);
       expect(runtime.interval).toBe("1h");
-
-      const wire = toWireMarketBar(runtime);
-      expect(wire.timestamp).toBe(now.getTime());
     });
   });
 
@@ -114,23 +159,34 @@ describe("Schema serdes", () => {
     it("should handle discriminated union for OrderAction", () => {
       const now = new Date();
 
-      const runtime = OrderSchema.parse({
+      // Create test runtime object (Order uses Date for created)
+      const testOrder = {
         id: "order-1",
         symbol: "BTCUSDT",
-        side: "BUY",
-        effect: "OPEN_LONG",
-        type: "LIMIT",
+        side: "BUY" as const,
+        effect: "OPEN_LONG" as const,
+        type: "LIMIT" as const,
         quantity: 1,
         price: 50000,
-        created: now.getTime(),
-      });
+        created: now,
+      };
 
+      // Encode to wire format (Date → timestamp)
+      const wire = encodeOrder(testOrder);
+      expect(wire.id).toBe("order-1");
+      expect(wire.side).toBe("BUY");
+      expect(wire.effect).toBe("OPEN_LONG");
+      expect(wire.created).toBe(now.getTime());
+
+      // Validate wire format
+      const validatedWire = OrderWireSchema.parse(wire);
+
+      // Decode back to runtime object (timestamp → Date)
+      const runtime = decodeOrder(validatedWire);
+      expect(runtime.id).toBe("order-1");
       expect(runtime.side).toBe("BUY");
       expect(runtime.effect).toBe("OPEN_LONG");
       expect(runtime.created).toEqual(now);
-
-      const wire = toWireOrder(runtime);
-      expect(wire.created).toBe(now.getTime());
     });
   });
 
@@ -139,26 +195,39 @@ describe("Schema serdes", () => {
       const created = new Date();
       const modified = new Date(created.getTime() + 1000);
 
-      const runtime = OrderStateSchema.parse({
+      // Create test runtime object (OrderState uses Date for created/modified)
+      const testOrderState = {
         id: "order-1",
         symbol: "BTCUSDT",
-        side: "SELL",
-        effect: "CLOSE_LONG",
-        type: "MARKET",
+        side: "SELL" as const,
+        effect: "CLOSE_LONG" as const,
+        type: "MARKET" as const,
         quantity: 1,
-        created: created.getTime(),
+        created: created,
         filledQuantity: 0.5,
         remainingQuantity: 0.5,
-        status: "PARTIAL",
-        modified: modified.getTime(),
-      });
+        status: "PARTIAL" as const,
+        modified: modified,
+      };
 
-      expect(runtime.created).toEqual(created);
-      expect(runtime.modified).toEqual(modified);
-
-      const wire = toWireOrderState(runtime);
+      // Encode to wire format (Date → timestamp)
+      const wire = encodeOrderState(testOrderState);
+      expect(wire.id).toBe("order-1");
+      expect(wire.side).toBe("SELL");
+      expect(wire.effect).toBe("CLOSE_LONG");
       expect(wire.created).toBe(created.getTime());
       expect(wire.modified).toBe(modified.getTime());
+
+      // Validate wire format
+      const validatedWire = OrderStateWireSchema.parse(wire);
+
+      // Decode back to runtime object (timestamp → Date)
+      const runtime = decodeOrderState(validatedWire);
+      expect(runtime.id).toBe("order-1");
+      expect(runtime.side).toBe("SELL");
+      expect(runtime.effect).toBe("CLOSE_LONG");
+      expect(runtime.created).toEqual(created);
+      expect(runtime.modified).toEqual(modified);
     });
   });
 
@@ -166,22 +235,35 @@ describe("Schema serdes", () => {
     it("should serialize fill data", () => {
       const now = new Date();
 
-      const runtime = FillSchema.parse({
+      // Create test runtime object (Fill uses Date for created)
+      const testFill = {
         id: "fill-1",
         orderId: "order-1",
         symbol: "BTCUSDT",
-        side: "BUY",
-        effect: "OPEN_LONG",
+        side: "BUY" as const,
+        effect: "OPEN_LONG" as const,
         quantity: 1,
         price: 50000,
         commission: 10,
-        created: now.getTime(),
-      });
+        created: now,
+      };
 
-      expect(runtime.created).toEqual(now);
-
-      const wire = toWireFill(runtime);
+      // Encode to wire format (Date → timestamp)
+      const wire = encodeFill(testFill);
+      expect(wire.id).toBe("fill-1");
+      expect(wire.side).toBe("BUY");
+      expect(wire.effect).toBe("OPEN_LONG");
       expect(wire.created).toBe(now.getTime());
+
+      // Validate wire format
+      const validatedWire = FillWireSchema.parse(wire);
+
+      // Decode back to runtime object (timestamp → Date)
+      const runtime = decodeFill(validatedWire);
+      expect(runtime.id).toBe("fill-1");
+      expect(runtime.side).toBe("BUY");
+      expect(runtime.effect).toBe("OPEN_LONG");
+      expect(runtime.created).toEqual(now);
     });
   });
 
@@ -189,39 +271,56 @@ describe("Schema serdes", () => {
     it("should handle nested Map structures", () => {
       const now = new Date();
 
-      const longPos = LongPositionSchema.parse({
+      // Create test runtime objects (Position uses Date for modified, Map for positions)
+      const longPos = {
         quantity: 10,
         totalCost: 500000,
         realisedPnL: 1000,
         lots: [{ quantity: 10, price: 50000, totalCost: 500000 }],
-        modified: now.getTime(),
-      });
+        modified: now,
+      };
 
-      const shortPos = ShortPositionSchema.parse({
+      const shortPos = {
         quantity: 5,
         totalProceeds: 150000,
         realisedPnL: -500,
         lots: [{ quantity: 5, price: 30000, totalProceeds: 150000 }],
-        modified: now.getTime(),
-      });
+        modified: now,
+      };
 
-      const runtime = PositionSchema.parse({
+      const testPosition = {
         cash: 10000,
-        long: { BTCUSDT: toWireLongPosition(longPos) },
-        short: { ETHUSDT: toWireShortPosition(shortPos) },
+        long: new Map([["BTCUSDT", longPos]]),
+        short: new Map([["ETHUSDT", shortPos]]),
         totalCommission: 100,
         realisedPnL: 500,
-        modified: now.getTime(),
-      });
+        modified: now,
+      };
 
+      // Verify runtime structure
+      expect(testPosition.long).toBeInstanceOf(Map);
+      expect(testPosition.short).toBeInstanceOf(Map);
+      expect(testPosition.long.get("BTCUSDT")?.quantity).toBe(10);
+      expect(testPosition.short.get("ETHUSDT")?.quantity).toBe(5);
+
+      // Encode to wire format (Map → Object, Date → timestamp)
+      const wire = encodePosition(testPosition);
+      expect(wire.cash).toBe(10000);
+      expect(wire.long?.BTCUSDT.quantity).toBe(10);
+      expect(wire.short?.ETHUSDT.quantity).toBe(5);
+      expect(wire.modified).toBe(now.getTime());
+
+      // Validate wire format
+      const validatedWire = PositionWireSchema.parse(wire);
+
+      // Decode back to runtime object (Object → Map, timestamp → Date)
+      const runtime = decodePosition(validatedWire);
+      expect(runtime.cash).toBe(10000);
       expect(runtime.long).toBeInstanceOf(Map);
       expect(runtime.short).toBeInstanceOf(Map);
       expect(runtime.long?.get("BTCUSDT")?.quantity).toBe(10);
       expect(runtime.short?.get("ETHUSDT")?.quantity).toBe(5);
-
-      const wire = toWirePosition(runtime);
-      expect(wire.long?.BTCUSDT.quantity).toBe(10);
-      expect(wire.short?.ETHUSDT.quantity).toBe(5);
+      expect(runtime.modified).toEqual(now);
     });
   });
 });
