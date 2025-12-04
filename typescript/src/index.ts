@@ -32,13 +32,7 @@ export const AssetWireSchema = z.object({
 export type AssetWire = z.infer<typeof AssetWireSchema>;
 
 export const AssetSchema = AssetWireSchema.transform((data) => ({
-  symbol: data.symbol,
-  type: data.type,
-  name: data.name,
-  exchange: data.exchange,
-  currency: data.currency,
-  lotSize: data.lotSize,
-  tickSize: data.tickSize,
+  ...data,
   validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
   validUntil: data.validUntil ? new Date(data.validUntil) : undefined,
 }));
@@ -47,13 +41,7 @@ export type Asset = z.infer<typeof AssetSchema>;
 
 export function toWireAsset(asset: Asset): AssetWire {
   return {
-    symbol: asset.symbol,
-    type: asset.type,
-    name: asset.name,
-    exchange: asset.exchange,
-    currency: asset.currency,
-    lotSize: asset.lotSize,
-    tickSize: asset.tickSize,
+    ...asset,
     validFrom: asset.validFrom?.getTime(),
     validUntil: asset.validUntil?.getTime(),
   };
@@ -108,32 +96,16 @@ export const MarketQuoteWireSchema = z.object({
 export type MarketQuoteWire = z.infer<typeof MarketQuoteWireSchema>;
 
 export const MarketQuoteSchema = MarketQuoteWireSchema.transform((data) => ({
-  symbol: data.symbol,
-  price: data.price,
-  volume: data.volume,
-  totalVolume: data.totalVolume,
+  ...data,
   timestamp: new Date(data.timestamp),
-  bid: data.bid,
-  bidVol: data.bidVol,
-  ask: data.ask,
-  askVol: data.askVol,
-  preClose: data.preClose,
 }));
 
 export type MarketQuote = z.infer<typeof MarketQuoteSchema>;
 
 export function toWireMarketQuote(quote: MarketQuote): MarketQuoteWire {
   return {
-    symbol: quote.symbol,
-    price: quote.price,
-    volume: quote.volume,
-    totalVolume: quote.totalVolume,
+    ...quote,
     timestamp: quote.timestamp.getTime(),
-    bid: quote.bid,
-    bidVol: quote.bidVol,
-    ask: quote.ask,
-    askVol: quote.askVol,
-    preClose: quote.preClose,
   };
 }
 
@@ -168,28 +140,16 @@ export const MarketBarWireSchema = z.object({
 export type MarketBarWire = z.infer<typeof MarketBarWireSchema>;
 
 export const MarketBarSchema = MarketBarWireSchema.transform((data) => ({
-  symbol: data.symbol,
-  open: data.open,
-  high: data.high,
-  low: data.low,
-  close: data.close,
-  volume: data.volume,
+  ...data,
   timestamp: new Date(data.timestamp),
-  interval: data.interval,
 }));
 
 export type MarketBar = z.infer<typeof MarketBarSchema>;
 
 export function toWireMarketBar(bar: MarketBar): MarketBarWire {
   return {
-    symbol: bar.symbol,
-    open: bar.open,
-    high: bar.high,
-    low: bar.low,
-    close: bar.close,
-    volume: bar.volume,
+    ...bar,
     timestamp: bar.timestamp.getTime(),
-    interval: bar.interval,
   };
 }
 
@@ -362,10 +322,7 @@ export const LongPositionWireSchema = z.object({
 export type LongPositionWire = z.infer<typeof LongPositionWireSchema>;
 
 export const LongPositionSchema = LongPositionWireSchema.transform((data) => ({
-  quantity: data.quantity,
-  totalCost: data.totalCost,
-  realisedPnL: data.realisedPnL,
-  lots: data.lots,
+  ...data,
   modified: new Date(data.modified),
 }));
 
@@ -373,10 +330,7 @@ export type LongPosition = z.infer<typeof LongPositionSchema>;
 
 export function toWireLongPosition(pos: LongPosition): LongPositionWire {
   return {
-    quantity: pos.quantity,
-    totalCost: pos.totalCost,
-    realisedPnL: pos.realisedPnL,
-    lots: pos.lots,
+    ...pos,
     modified: pos.modified.getTime(),
   };
 }
@@ -399,10 +353,7 @@ export type ShortPositionWire = z.infer<typeof ShortPositionWireSchema>;
 
 export const ShortPositionSchema = ShortPositionWireSchema.transform(
   (data) => ({
-    quantity: data.quantity,
-    totalProceeds: data.totalProceeds,
-    realisedPnL: data.realisedPnL,
-    lots: data.lots,
+    ...data,
     modified: new Date(data.modified),
   })
 );
@@ -411,10 +362,7 @@ export type ShortPosition = z.infer<typeof ShortPositionSchema>;
 
 export function toWireShortPosition(pos: ShortPosition): ShortPositionWire {
   return {
-    quantity: pos.quantity,
-    totalProceeds: pos.totalProceeds,
-    realisedPnL: pos.realisedPnL,
-    lots: pos.lots,
+    ...pos,
     modified: pos.modified.getTime(),
   };
 }
@@ -431,7 +379,7 @@ export const PositionWireSchema = z.object({
 export type PositionWire = z.infer<typeof PositionWireSchema>;
 
 export const PositionSchema = PositionWireSchema.transform((data) => ({
-  cash: data.cash,
+  ...data,
   long: data.long
     ? new Map(
         Object.entries(data.long).map(([k, v]) => [
@@ -448,8 +396,6 @@ export const PositionSchema = PositionWireSchema.transform((data) => ({
         ])
       )
     : undefined,
-  totalCommission: data.totalCommission,
-  realisedPnL: data.realisedPnL,
   modified: new Date(data.modified),
 }));
 
@@ -457,7 +403,7 @@ export type Position = z.infer<typeof PositionSchema>;
 
 export function toWirePosition(pos: Position): PositionWire {
   return {
-    cash: pos.cash,
+    ...pos,
     long: pos.long
       ? Object.fromEntries(
           Array.from(pos.long.entries()).map(([k, v]) => [
@@ -474,8 +420,6 @@ export function toWirePosition(pos: Position): PositionWire {
           ])
         )
       : undefined,
-    totalCommission: pos.totalCommission,
-    realisedPnL: pos.realisedPnL,
     modified: pos.modified.getTime(),
   };
 }
