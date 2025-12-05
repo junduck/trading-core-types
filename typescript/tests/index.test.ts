@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
-  AssetWireSchema,
-  MarketSnapshotWireSchema,
-  MarketQuoteWireSchema,
-  MarketBarWireSchema,
-  OrderWireSchema,
-  OrderStateWireSchema,
-  FillWireSchema,
-  PositionWireSchema,
+  assetSchema,
+  marketSnapshotSchema,
+  marketQuoteSchema,
+  marketBarSchema,
+  orderSchema,
+  orderStateSchema,
+  fillSchema,
+  positionSchema,
   encodeAsset,
   decodeAsset,
   encodeMarketSnapshot,
@@ -47,7 +47,12 @@ describe("Schema serdes", () => {
       expect(wire.validUntil).toBe(later.getTime());
 
       // Validate wire format with schema
-      const validatedWire = AssetWireSchema.parse(wire);
+      const validationResult = assetSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object
       const runtime = decodeAsset(validatedWire);
@@ -76,7 +81,12 @@ describe("Schema serdes", () => {
       expect(wire.timestamp).toBe(now.getTime());
 
       // Validate wire format
-      const validatedWire = MarketSnapshotWireSchema.parse(wire);
+      const validationResult = marketSnapshotSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (Object → Map)
       const runtime = decodeMarketSnapshot(validatedWire);
@@ -110,7 +120,12 @@ describe("Schema serdes", () => {
       expect(wire.timestamp).toBe(now.getTime());
 
       // Validate wire format
-      const validatedWire = MarketQuoteWireSchema.parse(wire);
+      const validationResult = marketQuoteSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (timestamp → Date)
       const runtime = decodeMarketQuote(validatedWire);
@@ -144,7 +159,12 @@ describe("Schema serdes", () => {
       expect(wire.interval).toBe("1h");
 
       // Validate wire format
-      const validatedWire = MarketBarWireSchema.parse(wire);
+      const validationResult = marketBarSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (timestamp → Date)
       const runtime = decodeMarketBar(validatedWire);
@@ -179,7 +199,12 @@ describe("Schema serdes", () => {
       expect(wire.created).toBe(now.getTime());
 
       // Validate wire format
-      const validatedWire = OrderWireSchema.parse(wire);
+      const validationResult = orderSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (timestamp → Date)
       const runtime = decodeOrder(validatedWire);
@@ -219,7 +244,12 @@ describe("Schema serdes", () => {
       expect(wire.modified).toBe(modified.getTime());
 
       // Validate wire format
-      const validatedWire = OrderStateWireSchema.parse(wire);
+      const validationResult = orderStateSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (timestamp → Date)
       const runtime = decodeOrderState(validatedWire);
@@ -256,7 +286,12 @@ describe("Schema serdes", () => {
       expect(wire.created).toBe(now.getTime());
 
       // Validate wire format
-      const validatedWire = FillWireSchema.parse(wire);
+      const validationResult = fillSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (timestamp → Date)
       const runtime = decodeFill(validatedWire);
@@ -311,7 +346,12 @@ describe("Schema serdes", () => {
       expect(wire.modified).toBe(now.getTime());
 
       // Validate wire format
-      const validatedWire = PositionWireSchema.parse(wire);
+      const validationResult = positionSchema.validate(wire);
+      expect(validationResult.success).toBe(true);
+      if (!validationResult.success) {
+        throw new Error("Validation failed");
+      }
+      const validatedWire = validationResult.data;
 
       // Decode back to runtime object (Object → Map, timestamp → Date)
       const runtime = decodePosition(validatedWire);
