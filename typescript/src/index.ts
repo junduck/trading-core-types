@@ -20,7 +20,7 @@ import type {
 // Asset
 // ============================================================================
 
-const AssetWireSchema = z.object({
+export const AssetWireSchema = z.object({
   symbol: z.string(),
   type: z.string().optional(),
   name: z.string().optional(),
@@ -81,7 +81,7 @@ export const assetSchema = {
 // MarketSnapshot
 // ============================================================================
 
-const MarketSnapshotWireSchema = z.object({
+export const MarketSnapshotWireSchema = z.object({
   price: z.record(z.string(), z.number()),
   timestamp: z.number(),
 });
@@ -116,7 +116,7 @@ export const marketSnapshotSchema = {
 // MarketQuote
 // ============================================================================
 
-const MarketQuoteWireSchema = z.object({
+export const MarketQuoteWireSchema = z.object({
   symbol: z.string(),
   price: z.number(),
   volume: z.number().optional(),
@@ -177,7 +177,7 @@ export const marketQuoteSchema = {
 // MarketBar
 // ============================================================================
 
-const MarketBarWireSchema = z.object({
+export const MarketBarWireSchema = z.object({
   symbol: z.string(),
   open: z.number(),
   high: z.number(),
@@ -237,7 +237,7 @@ export const marketBarSchema = {
 // Order Types
 // ============================================================================
 
-const OrderActionSchema = z.discriminatedUnion("side", [
+export const OrderActionSchema = z.discriminatedUnion("side", [
   z.object({
     side: z.literal("BUY"),
     effect: z.enum(["OPEN_LONG", "CLOSE_SHORT"]),
@@ -248,7 +248,7 @@ const OrderActionSchema = z.discriminatedUnion("side", [
   }),
 ]);
 
-const OrderWireSchema = OrderActionSchema.and(
+export const OrderWireSchema = OrderActionSchema.and(
   z.object({
     id: z.string(),
     symbol: z.string(),
@@ -330,7 +330,7 @@ export interface PartialOrder {
   created?: Date;
 }
 
-const PartialOrderWireSchema = z.object({
+export const PartialOrderWireSchema = z.object({
   id: z.string(),
   side: z.enum(["BUY", "SELL"]).optional(),
   effect: z
@@ -390,7 +390,7 @@ export const partialOrderSchema = {
 // OrderState
 // ============================================================================
 
-const OrderStateWireSchema = OrderActionSchema.and(
+export const OrderStateWireSchema = OrderActionSchema.and(
   z.object({
     id: z.string(),
     symbol: z.string(),
@@ -479,7 +479,7 @@ export const orderStateSchema = {
 // Fill
 // ============================================================================
 
-const FillWireSchema = OrderActionSchema.and(
+export const FillWireSchema = OrderActionSchema.and(
   z.object({
     id: z.string(),
     orderId: z.string(),
@@ -559,13 +559,13 @@ export const fillSchema = {
 // Position Types
 // ============================================================================
 
-const LongPositionLotSchema = z.object({
+export const LongPositionLotSchema = z.object({
   quantity: z.number(),
   price: z.number(),
   totalCost: z.number(),
 });
 
-const LongPositionWireSchema = z.object({
+export const LongPositionWireSchema = z.object({
   quantity: z.number(),
   totalCost: z.number(),
   realisedPnL: z.number(),
@@ -601,13 +601,13 @@ export const longPositionSchema = {
   decode: (wire: LongPositionWire) => decodeLongPosition(wire),
 };
 
-const ShortPositionLotSchema = z.object({
+export const ShortPositionLotSchema = z.object({
   quantity: z.number(),
   price: z.number(),
   totalProceeds: z.number(),
 });
 
-const ShortPositionWireSchema = z.object({
+export const ShortPositionWireSchema = z.object({
   quantity: z.number(),
   totalProceeds: z.number(),
   realisedPnL: z.number(),
@@ -647,7 +647,7 @@ export const shortPositionSchema = {
 // Position
 // ============================================================================
 
-const PositionWireSchema = z.object({
+export const PositionWireSchema = z.object({
   cash: z.number(),
   long: z.record(z.string(), LongPositionWireSchema).optional(),
   short: z.record(z.string(), ShortPositionWireSchema).optional(),
