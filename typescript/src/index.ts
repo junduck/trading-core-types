@@ -14,6 +14,7 @@ import type {
   MarketBarInterval,
   OrderType,
   OrderStatus,
+  PartialOrder,
 } from "@junduck/trading-core/trading";
 
 // ============================================================================
@@ -317,18 +318,6 @@ export const orderSchema = {
 // ============================================================================
 // Partial Order for amendments and updates
 // ============================================================================
-
-export interface PartialOrder {
-  id: string;
-  side?: "BUY" | "SELL";
-  effect?: "OPEN_LONG" | "CLOSE_SHORT" | "CLOSE_LONG" | "OPEN_SHORT";
-  symbol?: string;
-  type?: OrderType;
-  quantity?: number;
-  price?: number;
-  stopPrice?: number;
-  created?: Date;
-}
 
 export const PartialOrderWireSchema = z.object({
   id: z.string(),
